@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoreHub BD - Stun Gun Model 928</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- PDF Generation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- FACEBOOK PIXEL CODE START -->
+    <!-- Meta Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1944621382787469');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=1944621382787469&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
+    <!-- FACEBOOK PIXEL CODE END -->
+
+    <style>
+        body {
+            font-family: 'Hind Siliguri', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="root"></div>
+
+<script type="text/babel">
+
+const { useState, useEffect, useRef } = React;
+
+function App() {
+    // --- TELEGRAM CONFIG (অবশ্যই পূরণ করবেন) ---
+    // BotFather থেকে পাওয়া টোকেন
+    const TELEGRAM_BOT_TOKEN = "8483655630:AAFqZnb89nKI_Un_oKxRGaYh23KXOrINo1k"; 
+    // userinfobot থেকে পাওয়া চ্যাট আইডি
+    const TELEGRAM_CHAT_ID = "6054624451"; 
+    // ------------------------------------------
+
+    // Generate Unique Order ID at start
+    const [orderId] = useState(() => Math.floor(100000 + Math.random() * 900000).toString());
+
+    // State Management
+    const [step, setStep] = useState(1); 
+    const [quantity, setQuantity] = useState(1); // Quantity State Added
+    const [formData, setFormData] = useState({
+        name: '',
+        phone: '',
+        address: '',
+        paymentMethod: 'bkash', 
+        senderNumber: '',
+        trxId: '',
+        note: ''
+    });
+
+    // Price Config
+    const regularPrice = 1800;
+    const discountPrice = 1499;
+    const advancePayment = 100;
+    const bkashNumber = "01647775899";
+    const nagadNumber = "01647775899";
+
+    // Calculate Total Price
+    const totalPrice = discountPrice * quantity;
+
+    // --- TELEGRAM SEND FUNCTION ---
+    const sendToTelegram = async (message) => {
+        if (TELEGRAM_BOT_TOKEN === "YOUR_BOT_TOKEN_HERE") return; // কনফিগার না করলে কাজ করবে না
+
+        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+        try {
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: message,
+                    parse_mode: 'HTML'
+                })
+            });
+        } catch (error) {
+            console.error("Telegram Error:", error);
+        }
+    };
+
+    // --- PDF DOWNLOAD FUNCTION ---
+    const downloadReceipt = () => {
+        const element = document.getElementById('receipt-content');
+        const opt = {
+            margin:       [10, 10, 10, 10], // Margins: top, left, bottom, right
+            filename:     `StoreHub_Order_${orderId}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, logging: true },
+            jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
+        };
+        
+        if(window.html2pdf) {
+            // Wait a bit to ensure styles are applied
+            window.html2pdf().set(opt).from(element).save();
+        } else {
+            alert("PDF জেনারেট হচ্ছে না, দয়া করে পেজটি রিফ্রেশ করুন।");
+        }
+    };
+
+    // --- TRACKING: VISIT ---
+    useEffect(() => {
+        // কেউ পেজে ঢুকার সাথে সাথে টেলিগ্রামে মেসেজ যাবে
+        const msg = `👀 <b>New Visitor Arrived!</b>\nOrder ID: <code>${orderId}</code>\nStatus: Viewing Product`;
+        sendToTelegram(msg);
+    }, []);
+
+    // Handle Input Change
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    // Handle Quantity Change
+    const increaseQty = () => setQuantity(q => q + 1);
+    const decreaseQty = () => setQuantity(q => q > 1 ? q - 1 : 1);
+
+    // Step 1: Go to Payment (CAPTURE LEAD & PIXEL EVENTS)
+    const handleNext = async (e) => {
+        e.preventDefault();
+        if(!formData.name || !formData.phone || !formData.address) {
+            alert("অনুগ্রহ করে আপনার নাম, ফোন নম্বর এবং ঠিকানা দিন।");
+            return;
+        }
+
+        // --- FACEBOOK PIXEL EVENTS (UPDATED) ---
+        // Use window.fbq to ensure global scope access
+        if(window.fbq) {
+            console.log("Firing Pixel Events: AddToCart & InitiateCheckout");
+            
+            // Track AddToCart
+            window.fbq('track', 'AddToCart', {
+                value: totalPrice,
+                currency: 'BDT',
+                content_ids: ['model-928'],
+                content_type: 'product',
+                contents: [{id: 'model-928', quantity: quantity}]
+            });
+
+            // Track InitiateCheckout
+            window.fbq('track', 'InitiateCheckout', {
+                value: totalPrice,
+                currency: 'BDT',
+                num_items: quantity,
+                content_ids: ['model-928'],
+                content_type: 'product'
+            });
+        } else {
+            console.log("Facebook Pixel (fbq) not found.");
+        }
+
+        // --- SEND DATA TO TELEGRAM (LEAD CAPTURED) ---
+        // পেমেন্ট না করলেও আপনি এই তথ্য পেয়ে যাবেন
+        const msg = `📝 <b>Lead Captured (Step 1 Done)</b>\n` +
+                    `Order ID: <code>${orderId}</code>\n` +
+                    `Product Qty: <b>${quantity} pcs</b>\n` +
+                    `Total Value: <b>${totalPrice} BDT</b>\n` +
+                    `-----------------------------\n` +
+                    `Name: ${formData.name}\n` +
+                    `Phone: ${formData.phone}\n` +
+                    `Address: ${formData.address}\n` +
+                    `Status: ⏳ Waiting for Payment`;
+        
+        await sendToTelegram(msg);
+
+        setStep(2);
+        window.scrollTo(0, 0);
+    };
+
+    // Step 2: Confirm Order (FINAL ORDER)
+    const handleOrderConfirm = async (e) => {
+        e.preventDefault();
+        if(!formData.senderNumber || !formData.trxId) {
+            alert("অনুগ্রহ করে সেন্ডার নম্বর এবং ট্রানজেকশন আইডি দিন।");
+            return;
+        }
+
+        // --- FACEBOOK PIXEL EVENT: PURCHASE (UPDATED) ---
+        if(window.fbq) {
+            console.log("Firing Pixel Event: Purchase");
+            window.fbq('track', 'Purchase', {
+                value: totalPrice, 
+                currency: 'BDT',
+                num_items: quantity,
+                content_ids: ['model-928'],
+                content_type: 'product'
+            });
+        }
+
+        // --- SEND FINAL DATA TO TELEGRAM ---
+        const msg = `✅ <b>ORDER CONFIRMED!</b>\n` +
+                    `Order ID: <code>${orderId}</code>\n` +
+                    `Qty: <b>${quantity} pcs</b> | Total: <b>${totalPrice} Tk</b>\n` +
+                    `-----------------------------\n` +
+                    `👤 <b>Customer Info:</b>\n` +
+                    `Name: ${formData.name}\n` +
+                    `Phone: <code>${formData.phone}</code>\n` +
+                    `Address: ${formData.address}\n` +
+                    `-----------------------------\n` +
+                    `💰 <b>Payment Info:</b>\n` +
+                    `Method: bKash/Nagad\n` +
+                    `Sender: <code>${formData.senderNumber}</code>\n` +
+                    `TrxID: <code>${formData.trxId}</code>\n` +
+                    `Advance Paid: 100 Tk\n` +
+                    `Due Amount: ${totalPrice - 100} Tk\n` +
+                    `Note: ${formData.note || 'N/A'}\n` +
+                    `-----------------------------\n` +
+                    `Delivery: 2-3 Days`;
+
+        await sendToTelegram(msg);
+
+        setStep(3);
+        window.scrollTo(0, 0);
+    };
+
+    return (
+        <div className="max-w-md mx-auto bg-white min-h-screen shadow-lg relative overflow-hidden">
+            
+            {/* Header / Navbar */}
+            <div className="bg-blue-900 text-white p-3 sticky top-0 z-50 flex justify-between items-center shadow-md">
+                <div className="flex items-center gap-2">
+                    {/* লোগো যোগ করার জায়গা: নিচের লিংকের বদলে আপনার লোগোর লিংক দিন */}
+                    <img 
+                        src="logo.jpg" 
+                        alt="StoreHub Logo" 
+                        className="h-10 w-10 object-contain rounded-full bg-white border-2 border-blue-400"
+                    />
+                    <h1 className="text-lg font-bold uppercase tracking-wider">StoreHub BD</h1>
+                </div>
+                <span className="text-xs bg-blue-800 px-2 py-1 rounded text-blue-200 font-mono">ID: {orderId}</span>
+            </div>
+
+            {/* Content Area */}
+            <div className="pb-10">
+                
+                {/* STEP 1: Product Details & Shipping Form */}
+                {step === 1 && (
+                    <div className="animate-fade-in">
+                        {/* Product Image */}
+                        <div className="relative">
+                            <img 
+                                src="https://m.media-amazon.com/images/I/61y+2+3k3DL._AC_SL1500_.jpg" 
+                                alt="Stun Gun 928" 
+                                className="w-full h-64 object-cover"
+                                onError={(e) => {e.target.src='https://placehold.co/600x400/222/FFF?text=Stun+Gun+Image'}}
+                            />
+                            <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md animate-pulse">
+                                ফ্রি ডেলিভারি
+                            </div>
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="p-5">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2">Self Defence Stun Gun (Model 928)</h2>
+                            
+                            <div className="flex items-end gap-3 mb-4">
+                                <span className="text-3xl font-bold text-blue-600">৳{discountPrice}</span>
+                                <span className="text-lg text-gray-400 line-through mb-1">৳{regularPrice}</span>
+                                <span className="text-sm bg-green-100 text-green-700 px-2 py-1 rounded mb-1">১৭% ছাড়</span>
+                            </div>
+
+                            {/* Features */}
+                            <div className="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
+                                <h3 className="font-semibold text-gray-700 mb-2 border-b pb-1">প্রোডাক্টের বিবরণ:</h3>
+                                <ul className="text-sm text-gray-600 space-y-2">
+                                    <li className="flex items-center gap-2"><i className="fas fa-bolt text-yellow-500"></i> হাই ভোল্টেজ শক প্রোটেকশন</li>
+                                    <li className="flex items-center gap-2"><i className="fas fa-lightbulb text-yellow-500"></i> শক্তিশালী LED ফ্ল্যাশলাইট</li>
+                                    <li className="flex items-center gap-2"><i className="fas fa-battery-full text-green-500"></i> রিচার্জেবল ব্যাটারি (কর্ড সহ)</li>
+                                    <li className="flex items-center gap-2"><i className="fas fa-shield-alt text-blue-500"></i> গ্রিপ সেফটি ডিজাইন</li>
+                                    <li className="flex items-center gap-2 font-bold text-blue-700"><i className="fas fa-shipping-fast"></i> ২-৩ দিনের মধ্যে ডেলিভারি</li>
+                                </ul>
+                            </div>
+
+                            {/* Quantity Selector & Total Price Show */}
+                            <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
+                                <h3 className="font-bold text-gray-800 mb-3">পরিমাণ নির্বাচন করুন:</h3>
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center bg-white rounded-lg shadow border border-gray-300">
+                                        <button onClick={decreaseQty} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-l-lg text-lg font-bold text-gray-600">-</button>
+                                        <span className="px-6 py-2 font-bold text-xl text-gray-800">{quantity}</span>
+                                        <button onClick={increaseQty} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-r-lg text-lg font-bold text-gray-600">+</button>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-xs text-gray-500 block">মোট মূল্য:</span>
+                                        <span className="text-2xl font-bold text-blue-700">৳{totalPrice}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Alert Box */}
+                            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 mb-6">
+                                <p className="text-sm text-yellow-800">
+                                    <i className="fas fa-info-circle mr-1"></i>
+                                    অর্ডারটি কনফার্ম করতে <b>১০০ টাকা</b> অগ্রিম পেমেন্ট করতে হবে। 
+                                    বাকি <b>{totalPrice - 100} টাকা</b> ডেলিভারির সময় দিবেন।
+                                </p>
+                            </div>
+
+                            {/* Order Form Step 1 */}
+                            <form onSubmit={handleNext} className="space-y-4">
+                                <h3 className="text-lg font-bold text-gray-800 border-l-4 border-blue-600 pl-3">অর্ডার করতে ফর্মটি পূরণ করুন</h3>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">আপনার নাম</label>
+                                    <input 
+                                        type="text" 
+                                        name="name"
+                                        required
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        placeholder="আপনার নাম লিখুন"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">মোবাইল নম্বর</label>
+                                    <input 
+                                        type="tel" 
+                                        name="phone"
+                                        required
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        placeholder="01XXXXXXXXX"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">সম্পূর্ণ ঠিকানা</label>
+                                    <textarea 
+                                        name="address"
+                                        required
+                                        value={formData.address}
+                                        onChange={handleChange}
+                                        rows="2"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        placeholder="গ্রাম/রোড, থানা, জেলা"
+                                    ></textarea>
+                                </div>
+
+                                <button 
+                                    type="submit" 
+                                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 transition shadow-lg flex justify-center items-center gap-2"
+                                >
+                                    পরবর্তী ধাপ <i className="fas fa-arrow-right"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* STEP 2: Payment */}
+                {step === 2 && (
+                    <div className="p-5 animate-fade-in">
+                        <button onClick={() => setStep(1)} className="text-gray-500 mb-4 flex items-center gap-1 text-sm">
+                            <i className="fas fa-arrow-left"></i> পেছনে যান
+                        </button>
+
+                        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 text-center mb-6">
+                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i className="fas fa-wallet text-2xl text-blue-600"></i>
+                            </div>
+                            <h2 className="text-xl font-bold text-gray-800 mb-2">পেমেন্ট সম্পন্ন করুন</h2>
+                            
+                            {/* Order Summary in Payment Page */}
+                            <div className="bg-gray-50 p-3 rounded mb-4 text-sm">
+                                <div className="flex justify-between mb-1">
+                                    <span>পরিমাণ:</span>
+                                    <span className="font-bold">{quantity} টি</span>
+                                </div>
+                                <div className="flex justify-between mb-1">
+                                    <span>মোট মূল্য:</span>
+                                    <span className="font-bold">৳{totalPrice}</span>
+                                </div>
+                                <div className="flex justify-between text-blue-600 font-bold border-t pt-1 mt-1">
+                                    <span>অগ্রিম পেমেন্ট:</span>
+                                    <span>৳{advancePayment}</span>
+                                </div>
+                            </div>
+
+                            <p className="text-gray-600 text-sm mb-4">অর্ডারটি নিশ্চিত করতে নিচের নম্বরে <b>১০০ টাকা</b> সেন্ড মানি করুন।</p>
+                            
+                            <div className="bg-gray-100 p-4 rounded-lg">
+                                <div className="flex justify-between items-center mb-2 border-b border-gray-300 pb-2">
+                                    <span className="font-bold text-pink-600"><i className="fas fa-mobile-alt"></i> বিকাশ:</span>
+                                    <span className="font-mono text-lg select-all cursor-pointer" onClick={() => navigator.clipboard.writeText(bkashNumber)}>{bkashNumber}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="font-bold text-orange-600"><i className="fas fa-mobile-alt"></i> নগদ:</span>
+                                    <span className="font-mono text-lg select-all cursor-pointer" onClick={() => navigator.clipboard.writeText(nagadNumber)}>{nagadNumber}</span>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-2 text-center">(নম্বর কপি করতে ট্যাপ করুন)</p>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleOrderConfirm} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">যেই নম্বর থেকে টাকা পাঠিয়েছেন</label>
+                                <input 
+                                    type="tel" 
+                                    name="senderNumber"
+                                    required
+                                    value={formData.senderNumber}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    placeholder="e.g. 017XXXXXXXX"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">ট্রানজেকশন আইডি (TrxID)</label>
+                                <input 
+                                    type="text" 
+                                    name="trxId"
+                                    required
+                                    value={formData.trxId}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    placeholder="e.g. 8H3K9..."
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">নোট (যদি থাকে)</label>
+                                <input 
+                                    type="text" 
+                                    name="note"
+                                    value={formData.note}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    placeholder="অন্য কোনো তথ্য..."
+                                />
+                            </div>
+
+                            <button 
+                                type="submit" 
+                                className="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition shadow-lg flex justify-center items-center gap-2"
+                            >
+                                <i className="fas fa-check-circle"></i> অর্ডার কনফার্ম করুন
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                {/* STEP 3: Success */}
+                {step === 3 && (
+                    <div className="p-5 text-center animate-fade-in pt-10">
+                        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i className="fas fa-check text-4xl text-green-600"></i>
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">ধন্যবাদ, {formData.name}!</h2>
+                        <p className="text-gray-600 mb-6">
+                            আপনার অর্ডারটি কনফার্ম হয়েছে। আগামী ২-৩ দিনের মধ্যে ডেলিভারি পাবেন।<br/>
+                            <span className="font-semibold text-blue-600">প্রোডাক্ট হাতে পেয়ে, চেক করে বাকি টাকা ডেলিভারি ম্যানকে দিবেন।</span>
+                        </p>
+                        
+                        {/* Receipt Container (এই অংশটি ডাউনলোড হবে) */}
+                        <div id="receipt-content" className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 text-left mb-6 relative">
+                            {/* Header for Receipt */}
+                            <div className="border-b border-gray-200 pb-3 mb-3 text-center flex flex-col items-center">
+                                {/* ADDED LOGO HERE */}
+                                <img 
+                                    src="/logo.jpg" 
+                                    alt="StoreHub Logo" 
+                                    className="h-12 w-12 object-contain rounded-full bg-white border-2 border-blue-400 mb-2"
+                                />
+                                <h2 className="text-xl font-bold uppercase text-blue-900 tracking-wider">StoreHub BD</h2>
+                                <p className="text-xs text-gray-500">Order Receipt</p>
+                                <p className="text-xs text-gray-400">Date: {new Date().toLocaleDateString()}</p>
+                            </div>
+
+                            {/* Customer Details */}
+                            <div className="mb-4 text-sm text-gray-700">
+                                <p className="mb-1"><span className="font-semibold">Name:</span> {formData.name}</p>
+                                <p className="mb-1"><span className="font-semibold">Phone:</span> {formData.phone}</p>
+                                <p className="mb-1"><span className="font-semibold">Address:</span> {formData.address}</p>
+                            </div>
+
+                            {/* Item Table */}
+                            <table className="w-full text-sm mb-4 text-gray-700 border-collapse">
+                                <thead>
+                                    <tr className="border-b border-gray-300">
+                                        <th className="text-left py-2">Item</th>
+                                        <th className="text-right py-2">Qty</th>
+                                        <th className="text-right py-2">Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td className="py-2">Stun Gun 928</td>
+                                        <td className="text-right py-2">{quantity}</td>
+                                        <td className="text-right py-2">{totalPrice} Tk</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            {/* Calculations */}
+                            <div className="border-t border-gray-200 pt-2 mt-2 text-sm text-gray-700">
+                                <div className="flex justify-between mb-1">
+                                    <span>Subtotal:</span>
+                                    <span>৳{totalPrice}</span>
+                                </div>
+                                <div className="flex justify-between mb-1">
+                                    <span>Delivery:</span>
+                                    <span>Free</span>
+                                </div>
+                                <div className="flex justify-between mb-1">
+                                    <span>Paid (Advance):</span>
+                                    <span>- ৳100</span>
+                                </div>
+                                <div className="flex justify-between text-blue-600 font-bold border-t border-dashed border-gray-300 mt-2 pt-2">
+                                    <span>Due Amount:</span>
+                                    <span>৳{totalPrice - 100}</span>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-6 text-center text-xs text-gray-400 border-t border-gray-100 pt-2">
+                                Order ID: #{orderId} <br/>
+                                <span className="text-[10px] text-gray-300">Generated by StoreHub BD</span>
+                            </div>
+                        </div>
+
+                        {/* Download Button */}
+                        <button 
+                            onClick={downloadReceipt}
+                            className="w-full bg-gray-800 text-white py-2 rounded-lg font-bold hover:bg-gray-900 transition flex justify-center items-center gap-2 mb-6 shadow-lg"
+                        >
+                            <i className="fas fa-file-download"></i> রিসিপ্ট ডাউনলোড করুন
+                        </button>
+
+                        {/* Order Status Display (Outside PDF) */}
+                        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg inline-block w-full mb-6 text-left">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm text-gray-500 uppercase">অর্ডার স্ট্যাটাস</span>
+                                <span className="text-sm font-bold text-blue-600 animate-pulse">Order In Review</span>
+                            </div>
+                            <div className="border-t pt-2 mt-2 text-sm text-gray-700">
+                                <div className="flex justify-between">
+                                    <span>মোট অর্ডার:</span>
+                                    <span className="font-bold">৳{totalPrice}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>অগ্রিম:</span>
+                                    <span className="font-bold">- ৳100</span>
+                                </div>
+                                <div className="flex justify-between text-red-600 font-bold border-t border-dashed mt-1 pt-1">
+                                    <span>ক্যাশ অন ডেলিভারি:</span>
+                                    <span>৳{totalPrice - 100}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Contact Options */}
+                        <div className="space-y-3">
+                            <p className="text-sm font-semibold text-gray-700">দ্রুত যোগাযোগের জন্য:</p>
+                            <div className="grid grid-cols-3 gap-3">
+                                <a href="tel:+8801647775899" className="flex flex-col items-center justify-center bg-white p-3 rounded shadow hover:bg-gray-50 border border-gray-200">
+                                    <i className="fas fa-phone-alt text-xl text-gray-700 mb-1"></i>
+                                    <span className="text-xs">কল করুন</span>
+                                </a>
+                                <a href="https://wa.me/16506687797" target="_blank" className="flex flex-col items-center justify-center bg-white p-3 rounded shadow hover:bg-gray-50 border border-gray-200">
+                                    <i className="fab fa-whatsapp text-xl text-green-500 mb-1"></i>
+                                    <span className="text-xs">হোয়াটসঅ্যাপ</span>
+                                </a>
+                                <a href="https://www.facebook.com/messages/t/895873023615199" target="_blank" className="flex flex-col items-center justify-center bg-white p-3 rounded shadow hover:bg-gray-50 border border-gray-200">
+                                    <i className="fab fa-facebook-messenger text-xl text-blue-500 mb-1"></i>
+                                    <span className="text-xs">মেসেঞ্জার</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 text-xs text-gray-400">
+                            অর্ডার আইডি: #{orderId}
+                        </div>
+                    </div>
+                )}
+
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-800 text-gray-400 text-center py-4 text-sm mt-auto">
+                <p>&copy; 2024 StoreHub BD. All rights reserved.</p>
+            </div>
+
+        </div>
+    );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+</script>
+
+</body>
+</html>
